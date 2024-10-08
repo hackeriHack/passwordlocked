@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #0066cc; /* Blue background */
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.3); /* 0.3 transparent white background */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            width: 300px;
+            text-align: center;
+        }
+
+        .container h2 {
+            margin: 0 0 20px;
+            color: #333;
+        }
+
+        .container input[type="text"],
+        .container input[type="password"],
+        .container input[type="number"],
+        .container input[type="url"],
+        .container textarea {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .container input[type="submit"],
+        .container button {
+            background-color: #004080; /* Dark blue button */
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .container input[type="submit"]:hover,
+        .container button:hover {
+            background-color: #00264d; /* Darker blue on hover */
+        }
+
+        .link {
+            margin-top: 10px;
+            color: #004080;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="login-container">
+        <h2>Login</h2>
+        <form onsubmit="return validateLogin()">
+            <input type="text" id="username" placeholder="Username" required><br>
+            <input type="password" id="password" placeholder="Password" required><br>
+            <input type="submit" value="Login">
+        </form>
+        <div class="link" onclick="showCreateAccount()">Create Account</div> <!-- Link to create account -->
+    </div>
+
+    <div class="container" id="create-account-container" style="display: none;">
+        <h2>Create Account</h2>
+        <form onsubmit="return createAccount()">
+            <input type="text" id="new-username" placeholder="Username" required><br>
+            <input type="password" id="new-password" placeholder="Password" required><br>
+            <input type="submit" value="Create Account">
+        </form>
+        <div class="link" onclick="showLogin()">Back to Login</div> <!-- Link to go back to login -->
+    </div>
+
+    <div class="container" id="webhook-container" style="display: none;">
+        <h2>Webhook Sender</h2>
+        <form onsubmit="sendWebhookMessages(); return false;">
+            <input type="url" id="webhook-url" placeholder="Webhook URL" required><br>
+            <input type="number" id="message-amount" placeholder="Amount of Messages" min="1" required><br>
+            <textarea id="message-content" placeholder="Message" rows="4" required></textarea><br>
+            <input type="submit" value="Send Messages">
+        </form>
+    </div>
+
+    <script>
+        function validateLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const storedPassword = localStorage.getItem(username);
+
+            if ((username === 'admin' && password === '123') || (storedPassword && password === storedPassword)) {
+                document.getElementById('login-container').style.display = 'none';
+                document.getElementById('webhook-container').style.display = 'block';
+                return false; // Prevent form submission to handle login with JavaScript
+            } else {
+                alert('Incorrect username or password!');
+                return false; // Prevent form submission
+            }
+        }
+
+        function showCreateAccount() {
+            document.getElementById('login-container').style.display = 'none';
+            document.getElementById('create-account-container').style.display = 'block';
+        }
+
+        function showLogin() {
+            document.getElementById('create-account-container').style.display = 'none';
+            document.getElementById('login-container').style.display = 'block';
+        }
+
+        function createAccount() {
+            const newUsername = document.getElementById('new-username').value;
+            const newPassword = document.getElementById('new-password').value;
+
+            // Save the new account details to localStorage
+            if (localStorage.getItem(newUsername)) {
+                alert('Username already exists. Please choose a different username.');
+            } else {
+                localStorage.setItem(newUsername, newPassword);
+                alert(`Account created successfully for ${newUsername}.`);
+                showLogin(); // Go back to the login page after creating an account
+            }
+            return false; // Prevent form submission
+        }
+
+        async function sendWebhookMessages() {
+            const webhookUrl = document.getElementById('webhook-url').value;
+            const messageAmount = parseInt(document.getElementById('message-amount').value, 10);
+            const messageContent = document.getElementById('message-content').value;
+
+            for (let i = 0; i < messageAmount; i++) {
+                try {
+                    const response = await fetch(webhookUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ content: messageContent })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Error: ${response.status}`);
+                    }
+                    console.log(`Message ${i + 1} sent successfully!`);
+                } catch (error) {
+                    console.error(`Failed to send message ${i + 1}: ${error.message}`);
+                }
+            }
+            alert(`Sent ${messageAmount} messages to ${webhookUrl}.`);
+        }
+    </script>
+</body>
+</html>
